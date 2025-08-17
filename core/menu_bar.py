@@ -1,41 +1,50 @@
 # File: core/menu_bar.py
 """
 Menu Bar System for Ultimate Animation Picker
-Provides File, Edit, View, Create, and Help menus with comprehensive functionality
+Provides File, Edit, View, Create, Tabs and Help menus with comprehensive functionality
 """
 
-import os
 from PySide2 import QtWidgets, QtCore, QtGui
 from PySide2.QtCore import Signal
 
+
 class UltimatePickerMenuBar(QtWidgets.QMenuBar):
-    """Enhanced menu bar with all required functionality"""
-    
-    # Signals for menu actions
+    """Enhanced menu bar that exposes signals for the main app."""
+
+    # ===== File =====
     new_picker_requested = Signal()
-    save_picker_requested = Signal()
     open_picker_requested = Signal()
+    save_picker_requested = Signal()
+    save_as_picker_requested = Signal()
+    import_layout_requested = Signal()
+    export_layout_requested = Signal()
+    exit_requested = Signal()
+
+    # ===== Edit =====
+    undo_requested = Signal()
+    redo_requested = Signal()
+    cut_requested = Signal()
+    copy_requested = Signal()
+    paste_requested = Signal()
+    duplicate_requested = Signal()
+    delete_requested = Signal()
+    select_all_requested = Signal()
+    select_none_requested = Signal()
+    group_requested = Signal()
+    ungroup_requested = Signal()
+
+    # ===== View / Mode =====
     edit_mode_toggled = Signal(bool)
-    delete_selected = Signal()
-    copy_items = Signal()
-    paste_items = Signal()
-    copy_style = Signal()
-    paste_style = Signal()
-    align_left = Signal()
-    align_right = Signal()
-    align_center = Signal()
-    align_top = Signal()
-    align_bottom = Signal()
-    align_middle = Signal()
-    bring_to_front = Signal()
-    send_to_back = Signal()
-    zoom_in = Signal()
-    zoom_out = Signal()
-    zoom_fit = Signal()
-    zoom_reset = Signal()
     toggle_grid = Signal(bool)
+    toggle_snap_to_grid = Signal(bool)
     toggle_animation_toolbar = Signal(bool)
     toggle_property_panel = Signal(bool)
+    zoom_in_requested = Signal()
+    zoom_out_requested = Signal()
+    reset_view_requested = Signal()
+    reset_zoom_requested = Signal()
+
+    # ===== Create =====
     create_rectangle = Signal()
     create_round_rectangle = Signal()
     create_circle = Signal()
@@ -45,307 +54,332 @@ class UltimatePickerMenuBar(QtWidgets.QMenuBar):
     create_radius_button = Signal()
     create_pose_button = Signal()
     create_text = Signal()
-    create_new_tab = Signal()
-    show_about = Signal()
+
+    # ===== Tabs =====
+    add_tab_requested = Signal()
+    rename_tab_requested = Signal()
+    delete_tab_requested = Signal()
+
+    # ===== Help =====
     show_help = Signal()
-    
+    show_about = Signal()
+
+    # ----- state -----
     def __init__(self, parent=None):
         super(UltimatePickerMenuBar, self).__init__(parent)
         self._edit_mode = False
         self._grid_visible = False
-        self._animation_toolbar_visible = True
-        self._property_panel_visible = False
-        self.setup_menus()
-        
-    def setup_menus(self):
-        """Setup all menu items"""
-        self.create_file_menu()
-        self.create_edit_menu()
-        self.create_view_menu()
-        self.create_create_menu()
-        self.create_help_menu()
-        
-    def create_file_menu(self):
-        """Create File menu"""
-        file_menu = self.addMenu("&File")
-        
-        # New Picker
-        new_action = QtWidgets.QAction("&New Picker", self)
-        new_action.setShortcut(QtGui.QKeySequence.New)
-        new_action.setStatusTip("Create a new picker")
-        new_action.triggered.connect(self.new_picker_requested.emit)
-        file_menu.addAction(new_action)
-        
-        file_menu.addSeparator()
-        
-        # Save Picker
-        save_action = QtWidgets.QAction("&Save Picker", self)
-        save_action.setShortcut(QtGui.QKeySequence.Save)
-        save_action.setStatusTip("Save current picker")
-        save_action.triggered.connect(self.save_picker_requested.emit)
-        file_menu.addAction(save_action)
-        
-        # Save As
-        save_as_action = QtWidgets.QAction("Save &As...", self)
-        save_as_action.setShortcut(QtGui.QKeySequence.SaveAs)
-        save_as_action.setStatusTip("Save picker with new name")
-        save_as_action.triggered.connect(self.save_picker_requested.emit)
-        file_menu.addAction(save_as_action)
-        
-        file_menu.addSeparator()
-        
-        # Open Picker
-        open_action = QtWidgets.QAction("&Open Picker", self)
-        open_action.setShortcut(QtGui.QKeySequence.Open)
-        open_action.setStatusTip("Open existing picker")
-        open_action.triggered.connect(self.open_picker_requested.emit)
-        file_menu.addAction(open_action)
-        
-        file_menu.addSeparator()
-        
-        # Recent Files submenu
-        recent_menu = file_menu.addMenu("Recent Files")
-        recent_menu.setEnabled(False)  # Will be enabled when recent files are available
-        
-    def create_edit_menu(self):
-        """Create Edit menu"""
-        edit_menu = self.addMenu("&Edit")
-        
-        # Edit Mode Toggle
-        self.edit_mode_action = QtWidgets.QAction("&Edit Mode", self)
-        self.edit_mode_action.setCheckable(True)
-        self.edit_mode_action.setShortcut(QtCore.Qt.Key_E)
-        self.edit_mode_action.setStatusTip("Toggle edit mode")
-        self.edit_mode_action.triggered.connect(self._toggle_edit_mode)
-        edit_menu.addAction(self.edit_mode_action)
-        
-        edit_menu.addSeparator()
-        
-        # Delete
-        delete_action = QtWidgets.QAction("&Delete", self)
-        delete_action.setShortcut(QtGui.QKeySequence.Delete)
-        delete_action.setStatusTip("Delete selected items")
-        delete_action.triggered.connect(self.delete_selected.emit)
-        edit_menu.addAction(delete_action)
-        
-        edit_menu.addSeparator()
-        
-        # Copy/Paste Items
-        copy_action = QtWidgets.QAction("&Copy Items", self)
-        copy_action.setShortcut(QtGui.QKeySequence.Copy)
-        copy_action.setStatusTip("Copy selected items")
-        copy_action.triggered.connect(self.copy_items.emit)
-        edit_menu.addAction(copy_action)
-        
-        paste_action = QtWidgets.QAction("&Paste Items", self)
-        paste_action.setShortcut(QtGui.QKeySequence.Paste)
-        paste_action.setStatusTip("Paste copied items")
-        paste_action.triggered.connect(self.paste_items.emit)
-        edit_menu.addAction(paste_action)
-        
-        edit_menu.addSeparator()
-        
-        # Copy/Paste Style
-        copy_style_action = QtWidgets.QAction("Copy St&yle", self)
-        copy_style_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_C)
-        copy_style_action.setStatusTip("Copy style from selected item")
-        copy_style_action.triggered.connect(self.copy_style.emit)
-        edit_menu.addAction(copy_style_action)
-        
-        paste_style_action = QtWidgets.QAction("Paste St&yle", self)
-        paste_style_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_V)
-        paste_style_action.setStatusTip("Paste style to selected items")
-        paste_style_action.triggered.connect(self.paste_style.emit)
-        edit_menu.addAction(paste_style_action)
-        
-        edit_menu.addSeparator()
-        
-        # Alignment submenu
-        align_menu = edit_menu.addMenu("&Align")
-        
-        align_left_action = QtWidgets.QAction("Align &Left", self)
-        align_left_action.triggered.connect(self.align_left.emit)
-        align_menu.addAction(align_left_action)
-        
-        align_right_action = QtWidgets.QAction("Align &Right", self)
-        align_right_action.triggered.connect(self.align_right.emit)
-        align_menu.addAction(align_right_action)
-        
-        align_center_action = QtWidgets.QAction("Align &Center", self)
-        align_center_action.triggered.connect(self.align_center.emit)
-        align_menu.addAction(align_center_action)
-        
-        align_menu.addSeparator()
-        
-        align_top_action = QtWidgets.QAction("Align &Top", self)
-        align_top_action.triggered.connect(self.align_top.emit)
-        align_menu.addAction(align_top_action)
-        
-        align_bottom_action = QtWidgets.QAction("Align &Bottom", self)
-        align_bottom_action.triggered.connect(self.align_bottom.emit)
-        align_menu.addAction(align_bottom_action)
-        
-        align_middle_action = QtWidgets.QAction("Align &Middle", self)
-        align_middle_action.triggered.connect(self.align_middle.emit)
-        align_menu.addAction(align_middle_action)
-        
-        # Arrange submenu
-        arrange_menu = edit_menu.addMenu("A&rrange")
-        
-        front_action = QtWidgets.QAction("Bring to &Front", self)
-        front_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_F)
-        front_action.triggered.connect(self.bring_to_front.emit)
-        arrange_menu.addAction(front_action)
-        
-        back_action = QtWidgets.QAction("Send to &Back", self)
-        back_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.SHIFT + QtCore.Qt.Key_B)
-        back_action.triggered.connect(self.send_to_back.emit)
-        arrange_menu.addAction(back_action)
-        
-    def create_view_menu(self):
-        """Create View menu"""
-        view_menu = self.addMenu("&View")
-        
-        # Zoom controls
-        zoom_in_action = QtWidgets.QAction("Zoom &In", self)
-        zoom_in_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Plus)
-        zoom_in_action.triggered.connect(self.zoom_in.emit)
-        view_menu.addAction(zoom_in_action)
-        
-        zoom_out_action = QtWidgets.QAction("Zoom &Out", self)
-        zoom_out_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_Minus)
-        zoom_out_action.triggered.connect(self.zoom_out.emit)
-        view_menu.addAction(zoom_out_action)
-        
-        zoom_fit_action = QtWidgets.QAction("&Fit to Window", self)
-        zoom_fit_action.setShortcut(QtCore.Qt.Key_F)
-        zoom_fit_action.triggered.connect(self.zoom_fit.emit)
-        view_menu.addAction(zoom_fit_action)
-        
-        zoom_reset_action = QtWidgets.QAction("&Reset Zoom", self)
-        zoom_reset_action.setShortcut(QtCore.Qt.CTRL + QtCore.Qt.Key_0)
-        zoom_reset_action.triggered.connect(self.zoom_reset.emit)
-        view_menu.addAction(zoom_reset_action)
-        
-        view_menu.addSeparator()
-        
-        # Grid toggle
-        self.grid_action = QtWidgets.QAction("Show &Grid", self)
-        self.grid_action.setCheckable(True)
-        self.grid_action.setShortcut(QtCore.Qt.Key_G)
-        self.grid_action.triggered.connect(self._toggle_grid)
-        view_menu.addAction(self.grid_action)
-        
-        view_menu.addSeparator()
-        
-        # Panel toggles
-        self.animation_toolbar_action = QtWidgets.QAction("&Animation Toolbar", self)
-        self.animation_toolbar_action.setCheckable(True)
-        self.animation_toolbar_action.setChecked(True)
-        self.animation_toolbar_action.triggered.connect(self._toggle_animation_toolbar)
-        view_menu.addAction(self.animation_toolbar_action)
-        
-        self.property_panel_action = QtWidgets.QAction("&Property Panel", self)
-        self.property_panel_action.setCheckable(True)
-        self.property_panel_action.triggered.connect(self._toggle_property_panel)
-        view_menu.addAction(self.property_panel_action)
-        
-    def create_create_menu(self):
-        """Create Create menu"""
-        create_menu = self.addMenu("&Create")
-        
-        # Button types
-        rect_action = QtWidgets.QAction("&Rectangle Button", self)
-        rect_action.triggered.connect(self.create_rectangle.emit)
-        create_menu.addAction(rect_action)
-        
-        round_rect_action = QtWidgets.QAction("R&ound Rectangle Button", self)
-        round_rect_action.triggered.connect(self.create_round_rectangle.emit)
-        create_menu.addAction(round_rect_action)
-        
-        circle_action = QtWidgets.QAction("&Circle Button", self)
-        circle_action.triggered.connect(self.create_circle.emit)
-        create_menu.addAction(circle_action)
-        
-        polygon_action = QtWidgets.QAction("&Polygon Button", self)
-        polygon_action.triggered.connect(self.create_polygon.emit)
-        create_menu.addAction(polygon_action)
-        
-        create_menu.addSeparator()
-        
-        # Controls
-        checkbox_action = QtWidgets.QAction("Chec&kbox", self)
-        checkbox_action.triggered.connect(self.create_checkbox.emit)
-        create_menu.addAction(checkbox_action)
-        
-        slider_action = QtWidgets.QAction("&Slider", self)
-        slider_action.triggered.connect(self.create_slider.emit)
-        create_menu.addAction(slider_action)
-        
-        radius_action = QtWidgets.QAction("Radius &Button", self)
-        radius_action.triggered.connect(self.create_radius_button.emit)
-        create_menu.addAction(radius_action)
-        
-        pose_action = QtWidgets.QAction("&Pose Button", self)
-        pose_action.triggered.connect(self.create_pose_button.emit)
-        create_menu.addAction(pose_action)
-        
-        create_menu.addSeparator()
-        
-        # Text
-        text_action = QtWidgets.QAction("&Text", self)
-        text_action.triggered.connect(self.create_text.emit)
-        create_menu.addAction(text_action)
-        
-        create_menu.addSeparator()
-        
-        # Tab
-        tab_action = QtWidgets.QAction("New &Tab", self)
-        tab_action.triggered.connect(self.create_new_tab.emit)
-        create_menu.addAction(tab_action)
-        
-    def create_help_menu(self):
-        """Create Help menu"""
-        help_menu = self.addMenu("&Help")
-        
-        help_action = QtWidgets.QAction("&Documentation", self)
-        help_action.setShortcut(QtCore.Qt.Key_F1)
-        help_action.triggered.connect(self.show_help.emit)
-        help_menu.addAction(help_action)
-        
-        help_menu.addSeparator()
-        
-        about_action = QtWidgets.QAction("&About Ultimate Picker", self)
-        about_action.triggered.connect(self.show_about.emit)
-        help_menu.addAction(about_action)
-        
-    def _toggle_edit_mode(self, checked):
-        """Handle edit mode toggle"""
+        self._snap_to_grid = False
+        self._anim_toolbar_visible = True
+        self._prop_panel_visible = True
+
+        self._build_menus()
+
+    # ---------------------------
+    # Build Menus
+    # ---------------------------
+    def _build_menus(self):
+        self._create_file_menu()
+        self._create_edit_menu()
+        self._create_view_menu()
+        self._create_create_menu()
+        self._create_tabs_menu()
+        self._create_help_menu()
+
+    # ===== File =====
+    def _create_file_menu(self):
+        m = self.addMenu("&File")
+
+        act = QtWidgets.QAction("&New Picker", self)
+        act.setShortcut(QtGui.QKeySequence.New)
+        act.triggered.connect(self.new_picker_requested.emit)
+        m.addAction(act)
+
+        act = QtWidgets.QAction("&Open…", self)
+        act.setShortcut(QtGui.QKeySequence.Open)
+        act.triggered.connect(self.open_picker_requested.emit)
+        m.addAction(act)
+
+        m.addSeparator()
+
+        act = QtWidgets.QAction("&Save", self)
+        act.setShortcut(QtGui.QKeySequence.Save)
+        act.triggered.connect(self.save_picker_requested.emit)
+        m.addAction(act)
+
+        act = QtWidgets.QAction("Save &As…", self)
+        act.setShortcut(QtGui.QKeySequence("Ctrl+Shift+S"))
+        act.triggered.connect(self.save_as_picker_requested.emit)
+        m.addAction(act)
+
+        m.addSeparator()
+
+        act = QtWidgets.QAction("&Import Layout…", self)
+        act.setShortcut(QtGui.QKeySequence("Ctrl+I"))
+        act.triggered.connect(self.import_layout_requested.emit)
+        m.addAction(act)
+
+        act = QtWidgets.QAction("&Export Layout…", self)
+        act.setShortcut(QtGui.QKeySequence("Ctrl+E"))
+        act.triggered.connect(self.export_layout_requested.emit)
+        m.addAction(act)
+
+        m.addSeparator()
+
+        act = QtWidgets.QAction("E&xit", self)
+        act.setShortcut(QtGui.QKeySequence("Ctrl+Q"))
+        act.triggered.connect(self.exit_requested.emit)
+        m.addAction(act)
+
+    # ===== Edit =====
+    def _create_edit_menu(self):
+        m = self.addMenu("&Edit")
+
+        def add(title, shortcut, signal):
+            a = QtWidgets.QAction(title, self)
+            if shortcut:
+                a.setShortcut(QtGui.QKeySequence(shortcut))
+            a.triggered.connect(signal.emit)
+            m.addAction(a)
+
+        add("&Undo", QtGui.QKeySequence.Undo, self.undo_requested)
+        add("&Redo", QtGui.QKeySequence.Redo, self.redo_requested)
+        m.addSeparator()
+        add("Cu&t", QtGui.QKeySequence.Cut, self.cut_requested)
+        add("&Copy", QtGui.QKeySequence.Copy, self.copy_requested)
+        add("&Paste", QtGui.QKeySequence.Paste, self.paste_requested)
+        add("&Duplicate", "Ctrl+D", self.duplicate_requested)
+        add("&Delete", QtGui.QKeySequence.Delete, self.delete_requested)
+        m.addSeparator()
+        add("Select &All", QtGui.QKeySequence.SelectAll, self.select_all_requested)
+        add("Select &None", "Ctrl+Shift+A", self.select_none_requested)
+        m.addSeparator()
+        add("&Group", "Ctrl+G", self.group_requested)
+        add("&Ungroup", "Ctrl+Shift+G", self.ungroup_requested)
+
+    # ===== View / Mode =====
+    def _create_view_menu(self):
+        m = self.addMenu("&View")
+
+        # Edit mode toggle
+        self.edit_mode_action = QtWidgets.QAction("&Edit Mode", self, checkable=True)
+        self.edit_mode_action.setChecked(self._edit_mode)
+        self.edit_mode_action.setShortcut(QtGui.QKeySequence("E"))
+        self.edit_mode_action.toggled.connect(self._on_edit_mode_toggled)
+        m.addAction(self.edit_mode_action)
+
+        m.addSeparator()
+
+        # Grid
+        self.grid_action = QtWidgets.QAction("Show &Grid", self, checkable=True)
+        self.grid_action.setChecked(self._grid_visible)
+        self.grid_action.toggled.connect(self._on_grid_toggled)
+        m.addAction(self.grid_action)
+
+        self.snap_action = QtWidgets.QAction("&Snap to Grid", self, checkable=True)
+        self.snap_action.setChecked(self._snap_to_grid)
+        self.snap_action.toggled.connect(self._on_snap_toggled)
+        m.addAction(self.snap_action)
+
+        m.addSeparator()
+
+        # Toolbars / Panels
+        self.anim_toolbar_action = QtWidgets.QAction("Show &Animation Toolbar", self, checkable=True)
+        self.anim_toolbar_action.setChecked(self._anim_toolbar_visible)
+        self.anim_toolbar_action.toggled.connect(self._on_anim_toolbar_toggled)
+        m.addAction(self.anim_toolbar_action)
+
+        self.prop_panel_action = QtWidgets.QAction("Show &Property Panel", self, checkable=True)
+        self.prop_panel_action.setChecked(self._prop_panel_visible)
+        self.prop_panel_action.toggled.connect(self._on_prop_panel_toggled)
+        m.addAction(self.prop_panel_action)
+
+        m.addSeparator()
+
+        # Zoom/View
+        a = QtWidgets.QAction("Zoom &In", self)
+        a.setShortcut(QtGui.QKeySequence.ZoomIn)
+        a.triggered.connect(self.zoom_in_requested.emit)
+        m.addAction(a)
+
+        a = QtWidgets.QAction("Zoom &Out", self)
+        a.setShortcut(QtGui.QKeySequence.ZoomOut)
+        a.triggered.connect(self.zoom_out_requested.emit)
+        m.addAction(a)
+
+        a = QtWidgets.QAction("&Reset Zoom", self)
+        a.setShortcut(QtGui.QKeySequence("Ctrl+0"))
+        a.triggered.connect(self.reset_zoom_requested.emit)
+        m.addAction(a)
+
+        a = QtWidgets.QAction("Reset &View", self)
+        a.setShortcut(QtGui.QKeySequence("Ctrl+Shift+0"))
+        a.triggered.connect(self.reset_view_requested.emit)
+        m.addAction(a)
+
+    # ===== Create =====
+    def _create_create_menu(self):
+        m = self.addMenu("&Create")
+
+        def add(title, signal, shortcut=None):
+            a = QtWidgets.QAction(title, self)
+            if shortcut:
+                a.setShortcut(QtGui.QKeySequence(shortcut))
+            a.triggered.connect(signal.emit)
+            m.addAction(a)
+
+        add("&Rectangle", self.create_rectangle, "R")
+        add("&Round Rectangle", self.create_round_rectangle)
+        add("&Circle", self.create_circle, "C")
+        add("&Polygon", self.create_polygon)
+        m.addSeparator()
+        add("&Checkbox", self.create_checkbox)
+        add("&Slider", self.create_slider)
+        add("&Radius Button", self.create_radius_button)
+        add("&Pose Button", self.create_pose_button)
+        m.addSeparator()
+        add("&Text", self.create_text, "T")
+
+    # ===== Tabs =====
+    def _create_tabs_menu(self):
+        m = self.addMenu("&Tabs")
+
+        a = QtWidgets.QAction("&Add Tab…", self)
+        a.setShortcut(QtGui.QKeySequence("Ctrl+T"))
+        a.triggered.connect(self.add_tab_requested.emit)
+        m.addAction(a)
+
+        a = QtWidgets.QAction("&Rename Tab…", self)
+        a.setShortcut(QtGui.QKeySequence("Ctrl+R"))
+        a.triggered.connect(self.rename_tab_requested.emit)
+        m.addAction(a)
+
+        a = QtWidgets.QAction("&Delete Tab…", self)
+        a.setShortcut(QtGui.QKeySequence("Ctrl+Shift+D"))
+        a.triggered.connect(self.delete_tab_requested.emit)
+        m.addAction(a)
+
+    # ===== Help =====
+    def _create_help_menu(self):
+        m = self.addMenu("&Help")
+
+        a = QtWidgets.QAction("&Help", self)
+        a.setShortcut(QtGui.QKeySequence.HelpContents)
+        a.triggered.connect(self.show_help.emit)
+        m.addAction(a)
+
+        a = QtWidgets.QAction("&About", self)
+        a.triggered.connect(self.show_about.emit)
+        m.addAction(a)
+
+    # ---------------------------
+    # Internal Handlers (update state + emit)
+    # ---------------------------
+    def _on_edit_mode_toggled(self, checked: bool):
         self._edit_mode = checked
         self.edit_mode_toggled.emit(checked)
-        
-    def _toggle_grid(self, checked):
-        """Handle grid toggle"""
+
+    def _on_grid_toggled(self, checked: bool):
         self._grid_visible = checked
         self.toggle_grid.emit(checked)
-        
-    def _toggle_animation_toolbar(self, checked):
-        """Handle animation toolbar toggle"""
-        self._animation_toolbar_visible = checked
+
+    def _on_snap_toggled(self, checked: bool):
+        self._snap_to_grid = checked
+        self.toggle_snap_to_grid.emit(checked)
+
+    def _on_anim_toolbar_toggled(self, checked: bool):
+        self._anim_toolbar_visible = checked
         self.toggle_animation_toolbar.emit(checked)
-        
-    def _toggle_property_panel(self, checked):
-        """Handle property panel toggle"""
-        self._property_panel_visible = checked
+
+    def _on_prop_panel_toggled(self, checked: bool):
+        self._prop_panel_visible = checked
         self.toggle_property_panel.emit(checked)
-        
-    def set_edit_mode(self, edit_mode):
-        """Set edit mode state"""
-        self._edit_mode = edit_mode
-        self.edit_mode_action.setChecked(edit_mode)
-        self.property_panel_action.setEnabled(edit_mode)
-        
-    def update_ui_state(self, has_selection=False, has_clipboard=False):
-        """Update menu states based on current selection and clipboard"""
-        # This would be called by the main app to update menu states
-        pass
+
+    # Optional external update (if app wants to push UI state back into menu)
+    def set_edit_mode(self, edit_mode: bool):
+        if self._edit_mode != edit_mode:
+            self._edit_mode = edit_mode
+            self.edit_mode_action.setChecked(edit_mode)
+
+    def set_panels_visible(self, anim_toolbar: bool = None, property_panel: bool = None):
+        if anim_toolbar is not None:
+            self._anim_toolbar_visible = anim_toolbar
+            self.anim_toolbar_action.setChecked(anim_toolbar)
+        if property_panel is not None:
+            self._prop_panel_visible = property_panel
+            self.prop_panel_action.setChecked(property_panel)
+
+
+class MenuBarManager:
+    """
+    Thin wrapper used by the main app to attach the menu bar and
+    re-expose all signals as attributes for easy connection.
+    """
+    def __init__(self, parent: QtWidgets.QMainWindow):
+        self.parent = parent
+        self.menu_bar = UltimatePickerMenuBar(parent)
+        parent.setMenuBar(self.menu_bar)
+
+        # Re-expose every signal for convenience
+        for name in dir(self.menu_bar):
+            sig = getattr(self.menu_bar, name)
+            if isinstance(sig, Signal):
+                # PySide2 signals aren't normal Python objects; we skip this path.
+                # We just explicitly mirror attributes below.
+                pass
+
+        # File
+        self.new_picker_requested = self.menu_bar.new_picker_requested
+        self.open_picker_requested = self.menu_bar.open_picker_requested
+        self.save_picker_requested = self.menu_bar.save_picker_requested
+        self.save_as_picker_requested = self.menu_bar.save_as_picker_requested
+        self.import_layout_requested = self.menu_bar.import_layout_requested
+        self.export_layout_requested = self.menu_bar.export_layout_requested
+        self.exit_requested = self.menu_bar.exit_requested
+
+        # Edit
+        self.undo_requested = self.menu_bar.undo_requested
+        self.redo_requested = self.menu_bar.redo_requested
+        self.cut_requested = self.menu_bar.cut_requested
+        self.copy_requested = self.menu_bar.copy_requested
+        self.paste_requested = self.menu_bar.paste_requested
+        self.duplicate_requested = self.menu_bar.duplicate_requested
+        self.delete_requested = self.menu_bar.delete_requested
+        self.select_all_requested = self.menu_bar.select_all_requested
+        self.select_none_requested = self.menu_bar.select_none_requested
+        self.group_requested = self.menu_bar.group_requested
+        self.ungroup_requested = self.menu_bar.ungroup_requested
+
+        # View / Mode
+        self.edit_mode_toggled = self.menu_bar.edit_mode_toggled
+        self.toggle_grid = self.menu_bar.toggle_grid
+        self.toggle_snap_to_grid = self.menu_bar.toggle_snap_to_grid
+        self.toggle_animation_toolbar = self.menu_bar.toggle_animation_toolbar
+        self.toggle_property_panel = self.menu_bar.toggle_property_panel
+        self.zoom_in_requested = self.menu_bar.zoom_in_requested
+        self.zoom_out_requested = self.menu_bar.zoom_out_requested
+        self.reset_view_requested = self.menu_bar.reset_view_requested
+        self.reset_zoom_requested = self.menu_bar.reset_zoom_requested
+
+        # Create
+        self.create_rectangle = self.menu_bar.create_rectangle
+        self.create_round_rectangle = self.menu_bar.create_round_rectangle
+        self.create_circle = self.menu_bar.create_circle
+        self.create_polygon = self.menu_bar.create_polygon
+        self.create_checkbox = self.menu_bar.create_checkbox
+        self.create_slider = self.menu_bar.create_slider
+        self.create_radius_button = self.menu_bar.create_radius_button
+        self.create_pose_button = self.menu_bar.create_pose_button
+        self.create_text = self.menu_bar.create_text
+
+        # Tabs
+        self.add_tab_requested = self.menu_bar.add_tab_requested
+        self.rename_tab_requested = self.menu_bar.rename_tab_requested
+        self.delete_tab_requested = self.menu_bar.delete_tab_requested
+
+        # Help
+        self.show_help = self.menu_bar.show_help
+        self.show_about = self.menu_bar.show_about
+
+    def get_menu_bar(self) -> UltimatePickerMenuBar:
+        return self.menu_bar
